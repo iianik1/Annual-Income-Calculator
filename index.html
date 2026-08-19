@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>YTD → Annual Income Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#0a1830;
+    --navy:#0f2242;
+    --navy-panel:#132a52;
+    --navy-panel-2:#0d2140;
+    --gold:#d4a72c;
+    --gold-soft:#e8c563;
+    --coral:#e8734a;
+    --ivory:#f2efe8;
+    --slate:#93a1b8;
+    --slate-dim:#5f6d85;
+    --ok:#5fb88a;
+    --line: rgba(255,255,255,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(212,167,44,0.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(232,115,74,0.08), transparent 55%),
+      var(--navy-deep);
+    color:var(--ivory);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+  }
+  .topbar{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 20px;
+    background:var(--navy-panel-2);
+    border-bottom:1px solid var(--line);
+    font-size:12.5px;
+    color:var(--slate);
+    flex-wrap:wrap;
+  }
+  .topbar .mark{
+    width:22px;height:22px;border-radius:6px;
+    background:linear-gradient(135deg,var(--gold),var(--coral));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:11px; color:var(--navy-deep);
+    flex:none;
+  }
+  .topbar b{color:var(--ivory); font-weight:600;}
+  .topbar .dot{opacity:0.4;}
+  .wrap{
+    max-width:1040px;
+    margin:0 auto;
+    padding:44px 24px 24px;
+    width:100%;
+    flex:1;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(28px,4vw,40px);
+    line-height:1.08;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--slate);
+    font-size:15px;
+    line-height:1.55;
+    max-width:56ch;
+    margin:0 0 34px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap:20px;
+    align-items:start;
+  }
+  @media (max-width:820px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--navy-panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px;
+  }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:var(--navy-panel-2);
+    padding:4px;
+    border-radius:10px;
+    margin-bottom:22px;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:9px 10px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--slate);
+    cursor:pointer;
+    border:none;
+    background:transparent;
+    font-family:'Inter',sans-serif;
+    transition:background .15s ease, color .15s ease;
+  }
+  .tab[aria-selected="true"]{
+    background:var(--gold);
+    color:var(--navy-deep);
+  }
+  .tab:focus-visible{outline:2px solid var(--gold-soft); outline-offset:2px;}
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--slate);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  .field input, .field select{
+    width:100%;
+    background:var(--navy-panel-2);
+    border:1px solid var(--line);
+    color:var(--ivory);
+    padding:11px 12px;
+    border-radius:9px;
+    font-size:15px;
+    font-family:'IBM Plex Mono',monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .field input:focus, .field select:focus{
+    outline:2px solid var(--gold-soft);
+    outline-offset:1px;
+    border-color:transparent;
+  }
+  .field select{font-family:'Inter',sans-serif; font-size:14px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  .panel-view{display:none;}
+  .panel-view.active{display:block;}
+
+  /* Result panel */
+  .result-panel{
+    background:linear-gradient(160deg, var(--navy-panel) 0%, var(--navy-panel-2) 100%);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px;
+    position:sticky;
+    top:20px;
+  }
+  .result-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--slate);
+    margin-bottom:6px;
+  }
+  .result-figure{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(34px,5vw,44px);
+    letter-spacing:-0.01em;
+    color:var(--ivory);
+    margin-bottom:4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .result-sub{
+    font-size:13px;
+    color:var(--slate);
+    margin-bottom:22px;
+  }
+
+  .ring-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:16px;
+    background:rgba(0,0,0,0.15);
+    border-radius:12px;
+    margin-bottom:16px;
+  }
+  .ring-meta{flex:1;}
+  .ring-meta .k{font-size:12px; color:var(--slate); margin-bottom:3px;}
+  .ring-meta .v{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:19px; font-weight:600; color:var(--gold-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .compare-box{
+    border-top:1px dashed var(--line);
+    padding-top:16px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 11px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .chip.ok{background:rgba(95,184,138,0.15); color:var(--ok);}
+  .chip.warn{background:rgba(232,115,74,0.16); color:var(--coral);}
+  .chip.neutral{background:rgba(147,161,184,0.14); color:var(--slate);}
+
+  .note{
+    margin-top:18px;
+    font-size:11.5px;
+    line-height:1.5;
+    color:var(--slate-dim);
+  }
+
+  /* Footer brand bar - fixed, non-removable */
+  .brandbar{
+    background:var(--navy-panel-2);
+    border-top:1px solid var(--line);
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    flex-wrap:wrap;
+    text-align:center;
+  }
+  .brandbar .avatar{
+    width:38px;height:38px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),var(--coral));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy-deep);
+    flex:none;
+  }
+  .brandbar .info{font-size:12.5px; color:var(--slate); line-height:1.5;}
+  .brandbar .info b{color:var(--ivory); font-size:13.5px;}
+  .brandbar .info .contact{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--gold-soft);}
+
+  ::selection{background:var(--gold); color:var(--navy-deep);}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="mark">AD</div>
+    <span><b>Anik Dey</b> <span class="dot">·</span> Loan Processing &amp; Mortgage Administration Specialist</span>
+    <span class="dot">·</span>
+    <span>Supporting Australian Mortgage Brokers, Remotely</span>
+  </div>
+
+  <div class="wrap">
+    <p class="eyebrow">Serviceability Tool</p>
+    <h1>YTD → Annual Income Calculator</h1>
+    <p class="sub">Turn a year-to-date figure from a payslip into a reliable annualised income estimate, by calendar days or by pay cycle, and check it against a stated annual salary.</p>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="tabs" role="tablist">
+          <button class="tab" id="tabDate" role="tab" aria-selected="true">By Date Range</button>
+          <button class="tab" id="tabCycle" role="tab" aria-selected="false">By Pay Cycle</button>
+        </div>
+
+        <div class="panel-view active" id="viewDate">
+          <div class="field">
+            <label for="ytdAmountDate">YTD Gross Income (AUD)</label>
+            <input type="number" id="ytdAmountDate" inputmode="decimal" placeholder="e.g. 42500" min="0" step="0.01" />
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="periodStart">Income period start</label>
+              <input type="date" id="periodStart" />
+            </div>
+            <div class="field">
+              <label for="asOfDate">As of date</label>
+              <input type="date" id="asOfDate" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="yearLength">Annualise over</label>
+            <select id="yearLength">
+              <option value="365">365 days (calendar year)</option>
+              <option value="fy">Australian financial year (1 Jul – 30 Jun)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel-view" id="viewCycle">
+          <div class="field">
+            <label for="ytdAmountCycle">YTD Gross Income (AUD)</label>
+            <input type="number" id="ytdAmountCycle" inputmode="decimal" placeholder="e.g. 42500" min="0" step="0.01" />
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="payFrequency">Pay frequency</label>
+              <select id="payFrequency">
+                <option value="52">Weekly (52 / yr)</option>
+                <option value="26" selected>Fortnightly (26 / yr)</option>
+                <option value="12">Monthly (12 / yr)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="periodsElapsed">Pay periods elapsed</label>
+              <input type="number" id="periodsElapsed" inputmode="numeric" placeholder="e.g. 18" min="1" step="1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:4px;">
+          <label for="statedAnnual">Stated annual income (optional, for comparison)</label>
+          <input type="number" id="statedAnnual" inputmode="decimal" placeholder="e.g. 92000" min="0" step="0.01" />
+        </div>
+      </div>
+
+      <div class="result-panel">
+        <div class="result-label">Annualised Income</div>
+        <div class="result-figure" id="resultFigure">$0</div>
+        <div class="result-sub" id="resultSub">Enter a YTD figure to calculate</div>
+
+        <div class="ring-row">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+            <circle id="ringProgress" cx="32" cy="32" r="27" fill="none" stroke="url(#ringGrad)" stroke-width="7"
+                    stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"
+                    transform="rotate(-90 32 32)"/>
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#d4a72c"/>
+                <stop offset="100%" stop-color="#e8734a"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="ring-meta">
+            <div class="k">Multiplier applied</div>
+            <div class="v" id="multiplierVal">×0.00</div>
+          </div>
+        </div>
+
+        <div class="compare-box" id="compareBox" style="display:none;">
+          <div class="result-label">Vs. Stated Annual</div>
+          <div id="compareChip"></div>
+        </div>
+
+        <div class="note">For serviceability assessment support only. Always confirm annualisation method against lender policy before use in a file.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="brandbar">
+    <div class="avatar">AD</div>
+    <div class="info">
+      <b>Anik Dey</b> — Loan Processing &amp; Mortgage Administration Specialist<br/>
+      <span class="contact">anikdey1807@gmail.com &nbsp;·&nbsp; +880 1521 401 995 &nbsp;·&nbsp; @anik_dey_munna &nbsp;·&nbsp; iianik1.github.io/AnikDey</span>
+    </div>
+  </div>
+
+<script>
+  const tabDate = document.getElementById('tabDate');
+  const tabCycle = document.getElementById('tabCycle');
+  const viewDate = document.getElementById('viewDate');
+  const viewCycle = document.getElementById('viewCycle');
+
+  let mode = 'date';
+
+  function setMode(m){
+    mode = m;
+    tabDate.setAttribute('aria-selected', m === 'date');
+    tabCycle.setAttribute('aria-selected', m === 'cycle');
+    viewDate.classList.toggle('active', m === 'date');
+    viewCycle.classList.toggle('active', m === 'cycle');
+    calculate();
+  }
+  tabDate.addEventListener('click', () => setMode('date'));
+  tabCycle.addEventListener('click', () => setMode('cycle'));
+
+  const fmt = new Intl.NumberFormat('en-AU', { style:'currency', currency:'AUD', maximumFractionDigits:0 });
+
+  const ring = document.getElementById('ringProgress');
+  const CIRC = 2 * Math.PI * 27;
+
+  function fySpan(asOf){
+    // Australian financial year: 1 Jul - 30 Jun
+    const y = asOf.getMonth() >= 6 ? asOf.getFullYear() : asOf.getFullYear() - 1;
+    const start = new Date(y, 6, 1);
+    const end = new Date(y + 1, 6, 1);
+    return { start, end, totalDays: Math.round((end - start) / 86400000) };
+  }
+
+  function calculate(){
+    let annualised = null;
+    let multiplier = null;
+    let progressPct = 0;
+
+    if(mode === 'date'){
+      const amount = parseFloat(document.getElementById('ytdAmountDate').value);
+      const startVal = document.getElementById('periodStart').value;
+      const asOfVal = document.getElementById('asOfDate').value;
+      const yearLenMode = document.getElementById('yearLength').value;
+
+      if(!isNaN(amount) && amount > 0 && startVal && asOfVal){
+        const start = new Date(startVal);
+        const asOf = new Date(asOfVal);
+        let daysElapsed = Math.round((asOf - start) / 86400000);
+        let totalDays = 365;
+
+        if(yearLenMode === 'fy'){
+          const span = fySpan(asOf);
+          totalDays = span.totalDays;
+        }
+
+        if(daysElapsed > 0){
+          multiplier = totalDays / daysElapsed;
+          annualised = amount * multiplier;
+          progressPct = Math.min(100, Math.max(0, (daysElapsed / totalDays) * 100));
+        }
+      }
+    } else {
+      const amount = parseFloat(document.getElementById('ytdAmountCycle').value);
+      const freq = parseFloat(document.getElementById('payFrequency').value);
+      const periods = parseFloat(document.getElementById('periodsElapsed').value);
+
+      if(!isNaN(amount) && amount > 0 && periods > 0){
+        multiplier = freq / periods;
+        annualised = amount * multiplier;
+        progressPct = Math.min(100, Math.max(0, (periods / freq) * 100));
+      }
+    }
+
+    const figureEl = document.getElementById('resultFigure');
+    const subEl = document.getElementById('resultSub');
+    const multEl = document.getElementById('multiplierVal');
+
+    if(annualised !== null){
+      figureEl.textContent = fmt.format(annualised);
+      subEl.textContent = 'Based on annualisation multiplier below';
+      multEl.textContent = '×' + multiplier.toFixed(2);
+    } else {
+      figureEl.textContent = '$0';
+      subEl.textContent = 'Enter a YTD figure to calculate';
+      multEl.textContent = '×0.00';
+    }
+
+    const offset = CIRC - (progressPct / 100) * CIRC;
+    ring.setAttribute('stroke-dashoffset', offset.toFixed(1));
+
+    // Comparison
+    const statedVal = parseFloat(document.getElementById('statedAnnual').value);
+    const compareBox = document.getElementById('compareBox');
+    const compareChip = document.getElementById('compareChip');
+
+    if(annualised !== null && !isNaN(statedVal) && statedVal > 0){
+      compareBox.style.display = 'block';
+      const diff = annualised - statedVal;
+      const pctDiff = (diff / statedVal) * 100;
+      let cls = 'ok', label;
+      if(Math.abs(pctDiff) <= 5){
+        cls = 'ok';
+        label = `Within ${Math.abs(pctDiff).toFixed(1)}% of stated — consistent`;
+      } else if(Math.abs(pctDiff) <= 12){
+        cls = 'neutral';
+        label = `${pctDiff > 0 ? '+' : ''}${pctDiff.toFixed(1)}% vs stated — worth a note`;
+      } else {
+        cls = 'warn';
+        label = `${pctDiff > 0 ? '+' : ''}${pctDiff.toFixed(1)}% vs stated — review recommended`;
+      }
+      compareChip.innerHTML = `<span class="chip ${cls}">${label}</span>`;
+    } else {
+      compareBox.style.display = 'none';
+    }
+  }
+
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', calculate);
+    el.addEventListener('change', calculate);
+  });
+
+  // Default the "as of" date to today for convenience
+  const asOfInput = document.getElementById('asOfDate');
+  const today = new Date();
+  asOfInput.value = today.toISOString().slice(0,10);
+
+  calculate();
+</script>
+</body>
+</html>
